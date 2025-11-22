@@ -32,7 +32,7 @@ fi
 # Build rx_profile_demo
 echo ""
 echo "Building rx_profile_demo..."
-g++ -o rx_profile_demo rx_profile_demo.cpp cc1100_raspi.cpp -lwiringPi
+g++ -o rx_profile_demo rx_profile_demo.cpp cc1100_raspi.cpp cc1100_globals.cpp -lwiringPi
 if [ $? -eq 0 ]; then
     chmod +x rx_profile_demo
     echo "✓ Build successful!"
@@ -45,13 +45,13 @@ fi
 echo ""
 echo "Building RX_Demo and TX_Demo..."
 if [ -f "RX_Demo.cpp" ]; then
-    g++ -o RX_Demo RX_Demo.cpp cc1100_raspi.cpp -lwiringPi
+    g++ -o RX_Demo RX_Demo.cpp cc1100_raspi.cpp cc1100_globals.cpp -lwiringPi
     chmod +x RX_Demo
     echo "✓ RX_Demo built"
 fi
 
 if [ -f "TX_Demo.cpp" ]; then
-    g++ -o TX_Demo TX_Demo.cpp cc1100_raspi.cpp -lwiringPi
+    g++ -o TX_Demo TX_Demo.cpp cc1100_raspi.cpp cc1100_globals.cpp -lwiringPi
     chmod +x TX_Demo
     echo "✓ TX_Demo built"
 fi
