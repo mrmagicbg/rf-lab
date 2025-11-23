@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `-mTPMS` and `-mIoT` mode switches
   - Frequency and channel selection
   - Debug output and register dumping
+- Packet logging: CSV logger for captured packets (TPMS and IoT)
+- Basic Manchester decoder for TPMS raw captures
 - Comprehensive README with:
   - Profile specifications and use cases
   - Hardware wiring diagrams
@@ -37,16 +39,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Configuration arrays generated via SmartRF Studio
 - Tested on Raspberry Pi with WiringPi SPI interface
 
-## [Unreleased]
-
-### Planned
-- Manchester decoder implementation for TPMS data extraction
-- OOK pulse-width decoder for IT+ protocol
-- CRC validation routines
-- Additional profiles:
-  - LoRa modulation support
-  - Additional TPMS variants (315 MHz)
-  - Z-Wave receiver mode
-- Web-based configuration interface
-- Real-time signal visualization
-- Packet logging and replay functionality

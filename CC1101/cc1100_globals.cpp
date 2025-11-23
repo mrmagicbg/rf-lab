@@ -1,7 +1,6 @@
-// Global definitions for Raspberry Pi build
 #include <stdint.h>
 
-// Mode and frequency selectors used by cc1100_raspi.cpp
+// Global selectors used by driver and demo
 int cc1100_freq_select = 0x03;    // default 868 MHz
 int cc1100_mode_select = 0x03;    // default GFSK 100 kb
 int cc1100_channel_select = 0;    // default channel 0

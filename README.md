@@ -202,8 +202,7 @@ Register configuration optimized for:
 
 ### Decoding Captured Data
 
-Current implementation captures raw packets. Future enhancements:
-- Manchester decoder for TPMS data
+This repository includes a basic packet logger and a simple Manchester decoder for TPMS captures (see `CC1101/rx_profile_demo.cpp`). Future enhancements include:
 - OOK pulse-width decoder for IT+
 - CRC validation and error correction
 - Higher-level protocol parsers
@@ -212,7 +211,7 @@ Current implementation captures raw packets. Future enhancements:
 
 ```
 rf-lab/
-├── README.md                    # This file
+├── README.md                    # This file (links to setup guide)
 ├── CC1101/                      # CC1101 driver and tools
 │   ├── cc1100_raspi.cpp        # Main driver (with TPMS + IoT profiles)
 │   ├── cc1100_raspi.h          # Driver header
@@ -267,6 +266,10 @@ This project is based on the excellent CC1101 driver library by [SpaceTeddy](htt
 - Custom register configurations for specialized RF capture
 
 All modifications are released under the same MIT license as the original work.
+
+## Setup Guide
+
+For a step-by-step setup and Raspberry Pi provisioning instructions, see `SETUP_GUIDE.md` in the repository root.
 
 ## License
 
