@@ -421,9 +421,6 @@ uint8_t CC1100::begin(volatile uint8_t &My_addr)
     uint8_t partnum, version;
     extern int cc1100_freq_select, cc1100_mode_select, cc1100_channel_select;
 
-    pinMode(GDO0, INPUT);                 //setup AVR GPIO ports
-    pinMode(GDO2, INPUT);
-
     // Initialize wiringPi for GPIO functions (required before pinMode)
     if (wiringPiSetup() == -1) {
         if(debug_level > 0){
@@ -431,6 +428,9 @@ uint8_t CC1100::begin(volatile uint8_t &My_addr)
         }
         return FALSE;
     }
+
+    pinMode(GDO0, INPUT);                 //setup AVR GPIO ports
+    pinMode(GDO2, INPUT);
 
     set_debug_level(set_debug_level());   //set debug level of CC1101 outputs
 
