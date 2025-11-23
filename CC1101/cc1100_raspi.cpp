@@ -424,6 +424,14 @@ uint8_t CC1100::begin(volatile uint8_t &My_addr)
     pinMode(GDO0, INPUT);                 //setup AVR GPIO ports
     pinMode(GDO2, INPUT);
 
+    // Initialize wiringPi for GPIO functions (required before pinMode)
+    if (wiringPiSetup() == -1) {
+        if(debug_level > 0){
+            printf("ERROR: wiringPi setup failed!\r\n");
+        }
+        return FALSE;
+    }
+
     set_debug_level(set_debug_level());   //set debug level of CC1101 outputs
 
     if(debug_level > 0){
