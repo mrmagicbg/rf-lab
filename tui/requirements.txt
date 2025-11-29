@@ -1,8 +1,5 @@
-# Minimal requirements for rpi_tui
+# Optional runtime dependencies for the TUI
 # `curses` is part of the standard library on Linux (ncurses)
-# Add packages here only if you add features that need external libs
-# Example: rich for nicer console UI
-# rich==13.3.0
-
-# For optional logging to files/rotation
-# loguru==0.7.0
+# Uncomment or add packages as needed for UI improvements or logging
+rich==13.3.0
+loguru==0.7.0
