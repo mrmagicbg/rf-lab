@@ -1,0 +1,12 @@
+[Unit]
+Description=RPI TUI Application
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/mrmagic/Code/GitHub/mrmagicbg/rpi-lab/tui/rpi_tui.py
+Restart=on-failure
+User=pi
+
+[Install]
+WantedBy=multi-user.target
