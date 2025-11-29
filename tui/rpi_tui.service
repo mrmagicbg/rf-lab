@@ -1,12 +1,18 @@
 [Unit]
-Description=RPI TUI Application
+Description=RPI TUI Application (runs on tty1)
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/mrmagic/Code/GitHub/mrmagicbg/rpi-lab/tui/rpi_tui.py
-Restart=on-failure
 User=pi
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /opt/rpi-lab/tui/rpi_tui.py
+Restart=on-failure
+StandardInput=tty
+StandardOutput=inherit
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
 
 [Install]
 WantedBy=multi-user.target
