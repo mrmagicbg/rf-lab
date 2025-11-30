@@ -28,26 +28,26 @@ sudo chown -R root:root /opt/rpi-lab || true
 - Display (Waveshare 4.3" DSI):
 
 ```bash
-sudo /opt/rpi-lab/install/display_install.sh
+sudo bash /opt/rpi-lab/install/display_install.sh
 # This runs the display installer in non-interactive mode (no reboot).
 ```
 
 - RF setup (if applicable):
 
 ```bash
-sudo /opt/rpi-lab/install/install_rf.sh
+sudo bash /opt/rpi-lab/install/install_rf.sh
 ```
 
 - TUI service + venv (creates a venv at `/opt/rpi-lab/.venv` and enables the systemd service):
 
 ```bash
-sudo /opt/rpi-lab/install/install_service.sh
+sudo bash /opt/rpi-lab/install/install_service.sh
 ```
 
 Notes:
 - The `install/` folder contains helpers: `display_install.sh`, `install_rf.sh`, `install_service.sh`, `venv_setup.sh`.
 - The TUI runs on `tty1` by default; edit `tui/rpi_tui.service` if you prefer a different TTY or user.
-- Touch support requires input drivers; `display_install.sh` installs `xserver-xorg-input-evdev` and calibration tools.
+- Touch support requires input drivers; `display_install.sh` installs `xserver-xorg-input-evdev` and calibration tools. The script attempts to install `tslib` for touch support, but if it is not available in your distribution, it will try to install `libts-bin` as a fallback. If neither package is available, you may need to manually install touch support or consult your OS documentation for alternatives.
 
 4) Run the TUI manually (inside venv)
 
