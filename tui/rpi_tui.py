@@ -106,25 +106,45 @@ def main_menu(stdscr):
         except Exception:
             logger.debug('Could not read ABS ranges; using defaults')
 
-        raw_x, raw_y = 0, 0
+        raw_x, raw_y = None, None
+        last_syn_time = 0
+        last_press_time = 0
+        SYN_DEBOUNCE = 0.25
         for event in dev.read_loop():
             logger.debug(f"Touch event: {event}")
             if event.type == ecodes.EV_ABS:
-                if event.code == ecodes.ABS_X:
+                # Support both absolute and multitouch axes
+                if event.code in (ecodes.ABS_X, getattr(ecodes, 'ABS_MT_POSITION_X', None)):
                     raw_x = event.value
                     with touch_lock:
                         touch_state['raw_x'] = raw_x
-                elif event.code == ecodes.ABS_Y:
+                elif event.code in (ecodes.ABS_Y, getattr(ecodes, 'ABS_MT_POSITION_Y', None)):
                     raw_y = event.value
                     with touch_lock:
                         touch_state['raw_y'] = raw_y
-            elif event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH:
+            elif event.type == ecodes.EV_KEY and event.code == getattr(ecodes, 'BTN_TOUCH', None):
                 # value 1 = press, 0 = release
                 pressed = bool(event.value)
                 with touch_lock:
                     touch_state['pressed'] = pressed
                 logger.info(f"Touch {'pressed' if pressed else 'released'} raw_x={raw_x} raw_y={raw_y}")
-            # loop continues reading events
+            elif event.type == ecodes.EV_SYN and event.code == getattr(ecodes, 'SYN_REPORT', 0):
+                # Some drivers only send ABS updates followed by SYN_REPORT; treat that as a tap
+                now = time.time()
+                if raw_x is not None and raw_y is not None and (now - last_press_time) > SYN_DEBOUNCE:
+                    # register a short press
+                    with touch_lock:
+                        touch_state['pressed'] = True
+                    logger.info(f"SYN_REPORT detected; treating as press raw_x={raw_x} raw_y={raw_y}")
+                    last_press_time = now
+                    # leave pressed True briefly; a later loop iteration will handle mapping
+                    # schedule release after small delay
+                    def release_after(delay=0.15):
+                        time.sleep(delay)
+                        with touch_lock:
+                            touch_state['pressed'] = False
+                    threading.Thread(target=release_after, daemon=True).start()
+            # continue loop
 
     threading.Thread(target=touch_thread, daemon=True).start()
 
