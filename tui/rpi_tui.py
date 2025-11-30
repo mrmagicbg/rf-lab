@@ -70,6 +70,7 @@ def open_shell():
 
 
 def main_menu(stdscr):
+    logger.info("Main menu initializing...")
     # Thread-safe touch state
     touch_state = {
         "raw_x": None,
@@ -320,10 +321,12 @@ def main_menu(stdscr):
 
 
 def setup_curses():
+    logger.info("Setting up curses...")
     curses.wrapper(_curses_main)
 
 
 def _curses_main(stdscr):
+    logger.info("Curses initialized, starting main menu...")
     curses.start_color()
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_CYAN)
     curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLUE)
@@ -331,4 +334,12 @@ def _curses_main(stdscr):
 
 
 if __name__ == "__main__":
-    setup_curses()
+    logger.info("RPI TUI starting up...")
+    try:
+        setup_curses()
+        logger.info("RPI TUI exited normally")
+    except Exception as e:
+        logger.error(f"RPI TUI crashed with error: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise

@@ -17,6 +17,8 @@ StandardOutput=inherit
 TTYPath=/dev/tty1
 TTYReset=yes
 TTYVHangup=yes
+# Ensure we have proper terminal control
+TTYVTDisallocate=no
 
 [Install]
 WantedBy=multi-user.target
