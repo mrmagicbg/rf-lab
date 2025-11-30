@@ -9,12 +9,14 @@
 # - Automatic backup creation with timestamps
 # - Smart repository detection from script location
 # - Virtual environment recreation
+# - Git branch pulling with latest changes
 # - Systemd service management
 #
 # Usage: sudo bash deploy.sh [OPTIONS]
 # Options:
 #   --no-backup    Skip creating backup before deployment
 #   --hard         Force git reset --hard to remote branch (discards local changes)
+#   --no-pull      Skip pulling latest changes from remote branch
 #   --dry-run      Show what would be done without making changes
 #
 # Environment Variables:
@@ -23,9 +25,10 @@
 #   BACKUP_DIR     Backup directory (defaults to /opt/backups)
 #
 # Examples:
-#   sudo bash deploy.sh                          # Deploy with backup and prompts
+#   sudo bash deploy.sh                          # Deploy with backup and pull latest
 #   sudo bash deploy.sh --no-backup              # Skip backup creation
 #   sudo bash deploy.sh --hard                   # Force reset local changes
+#   sudo bash deploy.sh --no-pull                # Deploy current local state
 #   DEPLOY_BRANCH=develop sudo bash deploy.sh   # Deploy specific branch
 set -euo pipefail
 IFS=$'\n\t'
@@ -40,6 +43,7 @@ DO_BACKUP=1
 HARD=0
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 DRY_RUN=0
+PULL_LATEST=1
 
 COLOR_RED='\033[0;31m'; COLOR_GRN='\033[0;32m'; COLOR_YLW='\033[0;33m'; COLOR_BLU='\033[0;34m'; COLOR_RST='\033[0m'
 log(){ echo -e "${COLOR_BLU}➤${COLOR_RST} $*"; }
@@ -54,6 +58,7 @@ parse_args(){
 			--no-backup) DO_BACKUP=0 ;;
 			--dry-run) DRY_RUN=1 ;;
 			--hard) HARD=1 ;;
+			--no-pull) PULL_LATEST=0 ;;
 			*) die "Unknown arg: $1" ;;
 		esac
 		shift
@@ -91,6 +96,7 @@ echo "  App Directory:     $APP_DIR"
 echo "  Service:           $SERVICE_NAME"
 echo "  Backup:            $([ $DO_BACKUP -eq 1 ] && echo "Yes" || echo "No")"
 echo "  Hard Reset:        $([ $HARD -eq 1 ] && echo "Yes" || echo "No")"
+echo "  Pull Latest:       $([ $PULL_LATEST -eq 1 ] && echo "Yes" || echo "No")"
 echo "  Dry Run:           $([ $DRY_RUN -eq 1 ] && echo "Yes" || echo "No")"
 echo "============================================================================"
 echo ""
@@ -122,6 +128,27 @@ fi
 
 log "Stopping TUI service if running..."
 systemctl stop $SERVICE_NAME || true
+
+if [ $PULL_LATEST -eq 1 ]; then
+	log "Pulling latest changes from branch '$DEPLOY_BRANCH'..."
+	cd "$REPO_DIR"
+	
+	# Fetch latest changes
+	git fetch origin
+	
+	# Check if branch exists remotely
+	if git ls-remote --heads origin "$DEPLOY_BRANCH" | grep -q "$DEPLOY_BRANCH"; then
+		log "Checking out and pulling branch '$DEPLOY_BRANCH'..."
+		git checkout "$DEPLOY_BRANCH" 2>/dev/null || git checkout -b "$DEPLOY_BRANCH" "origin/$DEPLOY_BRANCH"
+		git pull origin "$DEPLOY_BRANCH"
+		
+		# Show what was updated
+		LATEST_COMMIT=$(git log -1 --oneline)
+		log "Latest commit: $LATEST_COMMIT"
+	else
+		warn "Branch '$DEPLOY_BRANCH' not found remotely, using current local state"
+	fi
+fi
 
 log "Syncing repo to /opt/rpi-lab..."
 rsync -a --delete --chown=root:root "$REPO_DIR/" "$APP_DIR/"
