@@ -185,3 +185,7 @@ git push origin feat/your-change
 ```
 
 If you'd like me to add an automated repair script (`install/repair_git.sh`) or make other doc improvements, tell me which pieces to prioritize.
+
+---
+
+**Last updated:** 2025-11-30
