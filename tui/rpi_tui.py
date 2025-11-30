@@ -127,6 +127,8 @@ def main_menu(stdscr):
                 pressed = bool(event.value)
                 with touch_lock:
                     touch_state['pressed'] = pressed
+                    if pressed:
+                        touch_state['last_press_time'] = time.time()
                 logger.info(f"Touch {'pressed' if pressed else 'released'} raw_x={raw_x} raw_y={raw_y}")
             elif event.type == ecodes.EV_SYN and event.code == getattr(ecodes, 'SYN_REPORT', 0):
                 # Some drivers only send ABS updates followed by SYN_REPORT; treat that as a tap
@@ -135,6 +137,7 @@ def main_menu(stdscr):
                     # register a short press
                     with touch_lock:
                         touch_state['pressed'] = True
+                        touch_state['last_press_time'] = now
                     logger.info(f"SYN_REPORT detected; treating as press raw_x={raw_x} raw_y={raw_y}")
                     last_press_time = now
                     # leave pressed True briefly; a later loop iteration will handle mapping
@@ -206,6 +209,7 @@ def main_menu(stdscr):
             try:
                 scaled_x = int((raw_x - x_min) * (w - 1) / (x_max - x_min))
                 scaled_y = int((raw_y - y_min) * (h - 1) / (y_max - y_min))
+                logger.debug(f"Scaled using ranges: raw_x={raw_x}({x_min}-{x_max}) -> scaled_x={scaled_x}, raw_y={raw_y}({y_min}-{y_max}) -> scaled_y={scaled_y}")
             except Exception:
                 scaled_x = None
                 scaled_y = None
@@ -221,6 +225,7 @@ def main_menu(stdscr):
                     scaled_y = int(raw_y * (h - 1) / 32767)
                 except Exception:
                     scaled_y = None
+            logger.debug(f"Scaled using fallback: raw_x={raw_x} -> scaled_x={scaled_x}, raw_y={raw_y} -> scaled_y={scaled_y}")
 
         dbg_lines = [
             f"rawX:{raw_x} rawY:{raw_y}",
@@ -261,13 +266,42 @@ def main_menu(stdscr):
             elif current_row == 3:
                 break
         # Handle touch press -> map to buttons using scaled coords
+        touch_processed = False
         if pressed and scaled_x is not None and scaled_y is not None:
-            # consider button row at bottom 3 rows of terminal
-            if scaled_y >= (h - 3):
+            logger.info(f"Touch detected: scaled_x={scaled_x}, scaled_y={scaled_y}, terminal_h={h}, button_row={h-4}")
+            # consider button row at bottom 4 rows of terminal (matches btn_y = h - 4)
+            if scaled_y >= (h - 4):
                 idx = int(scaled_x * len(BUTTONS) / max(1, w))
                 if 0 <= idx < len(BUTTONS):
                     action = BUTTONS[idx]['action']
                     logger.info(f"Touch button idx={idx} action={action}")
+                    touch_processed = True
+                    if action == 'up' and current_row > 0:
+                        current_row -= 1
+                    elif action == 'down' and current_row < len(MENU) - 1:
+                        current_row += 1
+                    elif action == 'enter':
+                        if current_row == 0:
+                            run_rf_script()
+                        elif current_row == 1:
+                            reboot_pi()
+                        elif current_row == 2:
+                            open_shell()
+                        elif current_row == 3:
+                            break
+                    elif action == 'cancel':
+                        break
+        
+        # Also check for recent touch events (within last 0.2 seconds)
+        with touch_lock:
+            last_press = touch_state.get('last_press_time', 0)
+        if not touch_processed and time.time() - last_press < 0.2 and scaled_x is not None and scaled_y is not None:
+            logger.info(f"Processing recent touch: scaled_x={scaled_x}, scaled_y={scaled_y}")
+            if scaled_y >= (h - 4):
+                idx = int(scaled_x * len(BUTTONS) / max(1, w))
+                if 0 <= idx < len(BUTTONS):
+                    action = BUTTONS[idx]['action']
+                    logger.info(f"Recent touch button idx={idx} action={action}")
                     if action == 'up' and current_row > 0:
                         current_row -= 1
                     elif action == 'down' and current_row < len(MENU) - 1:
