@@ -7,11 +7,15 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-RF_SCRIPT="/opt/rpi-lab/rf/setup_pi.sh"
-if [ ! -f "$RF_SCRIPT" ]; then
-  echo "RF script not found at $RF_SCRIPT"
-  exit 2
+# Find RF script
+if [ -f "/opt/rpi-lab/rf/setup_pi.sh" ]; then
+    RF_SCRIPT="/opt/rpi-lab/rf/setup_pi.sh"
+elif [ -f "$HOME/rpi-lab/rf/setup_pi.sh" ]; then
+    RF_SCRIPT="$HOME/rpi-lab/rf/setup_pi.sh"
+else
+    echo "RF script not found"
+    exit 2
 fi
 
 bash "$RF_SCRIPT"
- echo "RF installation finished."
+echo "RF installation finished."
