@@ -1,5 +1,55 @@
 # RPI Lab
 
+Clone to Raspberry Pi
+---------------------
+
+Quick instructions to clone this repository onto a Raspberry Pi.
+
+1) On your workstation (replace `pi@raspberrypi` with your Pi's SSH user/host):
+
+```bash
+# SSH into the Pi
+ssh pi@raspberrypi
+
+# Or clone directly on the Pi if you have a shell there
+cd /home/pi
+```
+
+2) Install prerequisites (only if not already installed):
+
+```bash
+sudo apt update && sudo apt install -y git python3 python3-venv python3-pip rsync
+```
+
+3) Clone the repo (use HTTPS or SSH URL):
+
+```bash
+# HTTPS (no SSH keys required)
+git clone https://github.com/mrmagicbg/rpi-lab.git ~/rpi-lab
+
+# OR SSH (set up SSH keys on GitHub for passwordless access)
+# git clone git@github.com:mrmagicbg/rpi-lab.git ~/rpi-lab
+```
+
+4) Post-clone setup (recommended location `/opt`):
+
+```bash
+sudo mkdir -p /opt/rpi-lab
+sudo rsync -a --chown=root:root ~/rpi-lab/ /opt/rpi-lab/
+```
+
+5) Run the installer helpers:
+
+```bash
+sudo /opt/rpi-lab/install/venv_setup.sh
+sudo /opt/rpi-lab/install/install_service.sh
+```
+
+Notes:
+- If you plan to develop on the Pi and commit changes, clone into your home directory (no `sudo`/`root` ownership), otherwise use `/opt` for system-wide installs.
+- If `git pull` later fails with corrupted objects, first back up the `.git` directory and try the repair steps documented in this README (see "Repairing a corrupted .git" below).
+
+
 This repository holds Raspberry Pi-related tools and utilities grouped by area:
 
 - `rf/` — existing RF-related tools and Pi setup scripts
