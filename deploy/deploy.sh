@@ -20,16 +20,16 @@
 #   --dry-run      Show what would be done without making changes
 #
 # Environment Variables:
-#   DEPLOY_BRANCH  Branch to deploy (defaults to 'main', prompts if not set)
+#   DEPLOY_BRANCH  Branch to deploy (if set, skips prompt; otherwise prompts with main default)
 #   APP_DIR        Target application directory (defaults to /opt/rpi-lab)
 #   BACKUP_DIR     Backup directory (defaults to /opt/backups)
 #
 # Examples:
-#   sudo bash deploy.sh                          # Deploy with backup and pull latest
+#   sudo bash deploy.sh                          # Prompts for branch (defaults to main)
 #   sudo bash deploy.sh --no-backup              # Skip backup creation
 #   sudo bash deploy.sh --hard                   # Force reset local changes
 #   sudo bash deploy.sh --no-pull                # Deploy current local state
-#   DEPLOY_BRANCH=develop sudo bash deploy.sh   # Deploy specific branch
+#   DEPLOY_BRANCH=develop sudo bash deploy.sh   # Deploy specific branch without prompting
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -41,7 +41,7 @@ SERVICE_NAME="rpi_tui.service"
 BACKUP_DIR="${BACKUP_DIR:-/opt/backups}"
 DO_BACKUP=1
 HARD=0
-DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+# DEPLOY_BRANCH will be set from environment or prompted for
 DRY_RUN=0
 PULL_LATEST=1
 
@@ -77,7 +77,8 @@ if [ -z "${DEPLOY_BRANCH:-}" ]; then
     echo "  Deployment Script for rpi-lab"
     echo "============================================================================"
     echo ""
-    read -p "Enter branch to deploy: " DEPLOY_BRANCH
+    read -p "Enter branch to deploy [main]: " DEPLOY_BRANCH
+    DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 fi
 
 # Validate branch name
