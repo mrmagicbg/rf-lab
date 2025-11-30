@@ -1,118 +1,99 @@
 # RPI Lab
 
-Clone to Raspberry Pi
----------------------
+Overview
+--------
 
-Quick instructions to clone this repository onto a Raspberry Pi.
+RPI Lab collects small utilities and helpers targeting Raspberry Pi devices:
 
-1) On your workstation (replace `pi@raspberrypi` with your Pi's SSH user/host):
+- `rf/` — RF-related code and Pi setup for CC1101 projects
+- `display/` — Display and touchscreen setup scripts (Waveshare panels)
+- `tui/` — Console (TUI) application and systemd service that runs on boot
+
+This README provides a Quickstart, detailed install steps, troubleshooting and maintenance guidance for deploying the project on a Raspberry Pi.
+
+Table of Contents
+-----------------
+
+- Quickstart
+- Installation (detailed)
+- Service management
+- Touch testing & debugging
+- Troubleshooting
+- Contributing
+
+Quickstart (10 minutes)
+-----------------------
+
+1) Update the Pi and install prerequisites:
 
 ```bash
-# SSH into the Pi
-ssh pi@raspberrypi
-
-# Or clone directly on the Pi if you have a shell there
-cd /home/pi
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git python3 python3-venv python3-pip rsync
 ```
 
-2) Install prerequisites (only if not already installed):
+2) Clone the repo into your home directory (developer mode):
 
 ```bash
-sudo apt update && sudo apt install -y git python3 python3-venv python3-pip rsync
-```
-
-3) Clone the repo (use HTTPS or SSH URL):
-
-```bash
-# HTTPS (no SSH keys required)
 git clone https://github.com/mrmagicbg/rpi-lab.git ~/rpi-lab
-
-# OR SSH (set up SSH keys on GitHub for passwordless access)
-# git clone git@github.com:mrmagicbg/rpi-lab.git ~/rpi-lab
 ```
 
-4) Post-clone setup (recommended location `/opt`):
+3) Optional: move to `/opt` for system-wide installs and run the helpers:
 
 ```bash
 sudo mkdir -p /opt/rpi-lab
 sudo rsync -a --chown=root:root ~/rpi-lab/ /opt/rpi-lab/
-```
-
-5) Run the installer helpers:
-
-```bash
 sudo /opt/rpi-lab/install/venv_setup.sh
 sudo /opt/rpi-lab/install/install_service.sh
 ```
 
-Notes:
-- If you plan to develop on the Pi and commit changes, clone into your home directory (no `sudo`/`root` ownership), otherwise use `/opt` for system-wide installs.
-- If `git pull` later fails with corrupted objects, first back up the `.git` directory and try the repair steps documented in this README (see "Repairing a corrupted .git" below).
+Installation (detailed)
+-----------------------
 
+See the `install/` folder for small helper scripts that setup the virtualenv (`venv_setup.sh`), display drivers (`display_install.sh`) and service installation (`install_service.sh`). Typical steps:
 
-This repository holds Raspberry Pi-related tools and utilities grouped by area:
-
-- `rf/` — existing RF-related tools and Pi setup scripts
-- `display/` — scripts to configure displays (Waveshare DSI panels etc.)
-- `tui/` — TUI (console) application and systemd service to run on boot
-
-Deployment / setup for a Raspberry Pi 3 (summary)
-
-1) Prepare the Pi
+1. Prepare the Pi and install system packages
 
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y git python3 python3-venv python3-pip
 ```
 
-2) Copy repository to the Pi (recommended location `/opt`)
+2. Clone and copy into `/opt` (optional):
 
 ```bash
-# on the Pi or via scp from your workstation
-sudo cp -r ~/rpi-lab /opt/rpi-lab
-sudo chown -R root:root /opt/rpi-lab || true
+git clone https://github.com/mrmagicbg/rpi-lab.git ~/rpi-lab
+sudo rsync -a --chown=root:root ~/rpi-lab/ /opt/rpi-lab/
 ```
 
-3) Install and configure components using the `install/` helpers
-
-- Display (Waveshare 4.3" DSI):
+3. Run the helper scripts (provided under `install/`):
 
 ```bash
-sudo bash /opt/rpi-lab/install/display_install.sh
-# This runs the display installer in non-interactive mode (no reboot).
+sudo /opt/rpi-lab/install/venv_setup.sh
+sudo /opt/rpi-lab/install/display_install.sh    # display + touch
+sudo /opt/rpi-lab/install/install_rf.sh         # RF hardware setup (optional)
+sudo /opt/rpi-lab/install/install_service.sh    # install and enable TUI systemd unit
 ```
 
-- RF setup (if applicable):
+Service management
+------------------
+
+The TUI runs as a systemd service defined in `tui/rpi_tui.service` and defaults to running on `tty1`.
+
+Common commands:
 
 ```bash
-sudo bash /opt/rpi-lab/install/install_rf.sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now rpi_tui.service
+sudo systemctl status rpi_tui.service -l
+sudo journalctl -xeu rpi_tui.service --no-pager
 ```
 
-- TUI service + venv (creates a venv at `/opt/rpi-lab/.venv` and enables the systemd service):
+If you change the unit file, run `sudo systemctl daemon-reload` before restarting or enabling.
 
-```bash
-sudo bash /opt/rpi-lab/install/install_service.sh
-```
+Touch testing & debugging
+-------------------------
 
-Notes:
-- The `install/` folder contains helpers: `display_install.sh`, `install_rf.sh`, `install_service.sh`, `venv_setup.sh`.
-- The TUI runs on `tty1` by default; edit `tui/rpi_tui.service` if you prefer a different TTY or user.
-- Touch support requires input drivers; `display_install.sh` installs `xserver-xorg-input-evdev` and calibration tools. The script attempts to install `tslib` for touch support, but if it is not available in your distribution, it will try to install `libts-bin` as a fallback. If neither package is available, you may need to manually install touch support or consult your OS documentation for alternatives.
-
-4) Run the TUI manually (inside venv)
-
-```bash
-source /opt/rpi-lab/.venv/bin/activate
-python /opt/rpi-lab/tui/rpi_tui.py
-```
-
-If you want additional features (logging, user selection, network checks), open an issue or request in the repo.
-
-Touch testing & calibration
----------------------------
-
-- The TUI now includes a debug area showing raw and scaled touch coordinates and press state.
-- Install `evtest` to verify the device produces events:
+Install `evtest` to inspect input events:
 
 ```bash
 sudo apt-get update
@@ -120,39 +101,53 @@ sudo apt-get install -y evtest
 sudo evtest /dev/input/event0
 ```
 
-- Run the TUI directly to see the debug area on the console:
+Run the TUI directly to see debug output (inside the venv):
 
 ```bash
+source /opt/rpi-lab/.venv/bin/activate
 sudo /opt/rpi-lab/.venv/bin/python /opt/rpi-lab/tui/rpi_tui.py
 ```
 
-- If touch coordinates look large (e.g. 0..32767), the TUI will auto-scale them. If mapping is off, note the raw X/Y values shown in the debug area and I can help tune the scaling constants.
+Troubleshooting
+---------------
 
-Repairing a corrupted .git
---------------------------
-
-If you encounter errors like "object file .git/objects/<xx>/<hash> is empty" when running `git pull`, follow these recovery steps on the Pi:
+Git corruption (`object file .git/objects/<xx>/<hash> is empty`):
 
 ```bash
 cd ~/rpi-lab
-# Backup the .git directory first
+# Backup .git
 cp -a .git ../rpi-lab-git-backup-$(date +%s)
-
-# Move the problematic empty object out of the way
+# Move the broken object out of the way
 mv .git/objects/<xx>/<hash> /tmp/
-
-# Run checks and try to fetch missing objects from remote
 git fsck --full
 git fetch --all
 git fetch --prune --all
 git pull
 
-# If fetch still fails, reclone and recover working files
+# Fallback: reclone and rsync working tree
 cd ..
 git clone https://github.com/mrmagicbg/rpi-lab.git rpi-lab-recovered
 rsync -av --exclude='.git' rpi-lab/ rpi-lab-recovered/
-
-# Inspect and commit recovered changes in rpi-lab-recovered
 ```
 
-If you want me to automate these steps I can provide a small repair script — tell me and I will add it to `install/`.
+Service start failures (tty or permissions):
+
+- Check `sudo journalctl -xeu rpi_tui.service` for Python tracebacks or permission errors.
+- Verify the virtualenv path `/opt/rpi-lab/.venv/bin/python` exists.
+- If the service can't access `/dev/tty1`, consider running the unit as `root` (default) or adjust `User=` and group/device permissions.
+
+Contributing
+------------
+
+Contributions welcome. Suggested workflow:
+
+```bash
+git checkout -b feat/your-change
+make your edits
+git add -A
+git commit -m "Describe change"
+git push origin feat/your-change
+# Open a PR on GitHub
+```
+
+If you'd like me to add an automated repair script (`install/repair_git.sh`) or make other doc improvements, tell me which pieces to prioritize.
