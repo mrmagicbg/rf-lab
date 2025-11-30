@@ -46,6 +46,12 @@ sudo /opt/rpi-lab/install/venv_setup.sh
 sudo /opt/rpi-lab/install/install_service.sh
 ```
 
+Or use the deployment script for full redeployment:
+
+```bash
+sudo bash ~/rpi-lab/deploy/deploy.sh
+```
+
 Installation (detailed)
 -----------------------
 
@@ -72,6 +78,12 @@ sudo /opt/rpi-lab/install/venv_setup.sh
 sudo /opt/rpi-lab/install/display_install.sh    # display + touch
 sudo /opt/rpi-lab/install/install_rf.sh         # RF hardware setup (optional)
 sudo /opt/rpi-lab/install/install_service.sh    # install and enable TUI systemd unit
+```
+
+Or use the deployment script for full redeployment (recommended for updates):
+
+```bash
+sudo bash /opt/rpi-lab/deploy/deploy.sh [--no-backup] [--hard]
 ```
 
 Service management
