@@ -127,3 +127,32 @@ sudo /opt/rpi-lab/.venv/bin/python /opt/rpi-lab/tui/rpi_tui.py
 ```
 
 - If touch coordinates look large (e.g. 0..32767), the TUI will auto-scale them. If mapping is off, note the raw X/Y values shown in the debug area and I can help tune the scaling constants.
+
+Repairing a corrupted .git
+--------------------------
+
+If you encounter errors like "object file .git/objects/<xx>/<hash> is empty" when running `git pull`, follow these recovery steps on the Pi:
+
+```bash
+cd ~/rpi-lab
+# Backup the .git directory first
+cp -a .git ../rpi-lab-git-backup-$(date +%s)
+
+# Move the problematic empty object out of the way
+mv .git/objects/<xx>/<hash> /tmp/
+
+# Run checks and try to fetch missing objects from remote
+git fsck --full
+git fetch --all
+git fetch --prune --all
+git pull
+
+# If fetch still fails, reclone and recover working files
+cd ..
+git clone https://github.com/mrmagicbg/rpi-lab.git rpi-lab-recovered
+rsync -av --exclude='.git' rpi-lab/ rpi-lab-recovered/
+
+# Inspect and commit recovered changes in rpi-lab-recovered
+```
+
+If you want me to automate these steps I can provide a small repair script — tell me and I will add it to `install/`.
