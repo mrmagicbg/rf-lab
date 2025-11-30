@@ -55,8 +55,32 @@ else
 fi
 
 echo "Installing required packages (idempotent)"
-sudo apt-get update
-sudo apt-get install -y --no-install-recommends xserver-xorg-input-evdev xinput-calibrator tslib
+# Preferred packages
+PKGS=(xserver-xorg-input-evdev xinput-calibrator tslib)
+TO_INSTALL=()
+for p in "${PKGS[@]}"; do
+  if apt-cache show "$p" >/dev/null 2>&1; then
+    TO_INSTALL+=("$p")
+  else
+    echo "Package $p not found in apt repos; will skip (or attempt fallback)."
+  fi
+done
+
+# Attempt install of discovered packages
+if [ ${#TO_INSTALL[@]} -gt 0 ]; then
+  sudo apt-get update
+  sudo apt-get install -y --no-install-recommends "${TO_INSTALL[@]}"
+fi
+
+# If tslib wasn't available, try common alternatives
+if ! dpkg -s tslib >/dev/null 2>&1; then
+  echo "tslib not installed. Trying common alternatives (libts-bin)..."
+  if apt-cache show libts-bin >/dev/null 2>&1; then
+    sudo apt-get install -y libts-bin || true
+  else
+    echo "libts-bin not available either. Skipping tslib-related installation."
+  fi
+fi
 
 cat <<'EOF2'
 Setup complete.
