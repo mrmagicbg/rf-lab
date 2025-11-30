@@ -3,8 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
-- Restructure: moved original contents into `rf/` and created `tui/` and `display/` folders.
-- Added `display/setup_waveshare_4.3inch_dsi.sh`: improved, idempotent display setup script.
-- Added `tui/rpi_tui.py` and `tui/rpi_tui.service`: TUI app and systemd service for auto-start on boot.
-- Updated root `README.md` with deployment and install steps.
+- Rename `scripts/` to `install/` and add install wrappers for display and RF.
+- Display: prefer `/boot/firmware/config.txt`, comment generic `vc4` overlays and add `dtoverlay=vc4-kms-dsi-4.3inch` idempotently.
+- Add venv-based install flow and update systemd unit to use venv Python.
+- Add `install/install_rf.sh`, `install/display_install.sh`, `install/install_service.sh`, `install/venv_setup.sh` helpers.
 
