@@ -75,26 +75,31 @@ def main_menu(stdscr):
 
     def touch_thread():
         if not InputDevice:
+            logger.warning("evdev not available, touch will not work.")
             return
         try:
             dev = InputDevice('/dev/input/event0')
+            logger.info("Touch device opened: /dev/input/event0")
         except Exception as e:
             logger.warning(f"Touch device not found: {e}")
             return
         x, y = 0, 0
         while True:
             for event in dev.read_loop():
+                logger.debug(f"Touch event: {event}")
                 if event.type == ecodes.EV_ABS:
                     if event.code == ecodes.ABS_X:
                         x = event.value
                     elif event.code == ecodes.ABS_Y:
                         y = event.value
                 elif event.type == ecodes.EV_KEY and event.code == ecodes.BTN_TOUCH and event.value == 1:
+                    logger.info(f"Touch at x={x}, y={y}")
                     # Map touch coordinates to button
                     # Assume display is 800x480, adjust as needed
                     if 400 < y < 480:
                         btn_width = 200
                         idx = x // btn_width
+                        logger.info(f"Touch mapped to button idx={idx}")
                         if 0 <= idx < len(BUTTONS):
                             touch_action["action"] = BUTTONS[idx]["action"]
             time.sleep(0.01)
@@ -107,32 +112,32 @@ def main_menu(stdscr):
         stdscr.clear()
         h, w = stdscr.getmaxyx()
         title = "RPI TUI"
-        # Draw title
+        # Draw title (extra large)
         try:
-            stdscr.addstr(1, w // 2 - len(title) // 2, title, curses.A_BOLD)
+            stdscr.addstr(1, w // 2 - len(title) // 2, title, curses.A_BOLD | curses.A_UNDERLINE)
         except curses.error:
             pass
-        # Draw menu with large text
+        # Draw menu with extra large text and spacing
         for idx, row in enumerate(MENU):
             x = w // 2 - len(row) // 2
-            y = h // 2 - len(MENU) * 2 + idx * 4
+            y = h // 2 - len(MENU) * 3 + idx * 6
             try:
                 if idx == current_row:
                     stdscr.attron(curses.color_pair(1))
-                    stdscr.addstr(y, x, row, curses.A_BOLD)
+                    stdscr.addstr(y, x, row.upper(), curses.A_BOLD)
                     stdscr.attroff(curses.color_pair(1))
                 else:
-                    stdscr.addstr(y, x, row)
+                    stdscr.addstr(y, x, row.upper(), curses.A_BOLD)
             except curses.error:
                 pass
-        # Draw large buttons at bottom
-        btn_y = h - 4
+        # Draw extra large buttons at bottom
+        btn_y = h - 6
         btn_width = w // len(BUTTONS)
         for idx, btn in enumerate(BUTTONS):
             bx = idx * btn_width
             try:
                 stdscr.attron(curses.color_pair(2))
-                stdscr.addstr(btn_y, bx + btn_width // 2 - len(btn["label"]) // 2, btn["label"], curses.A_BOLD)
+                stdscr.addstr(btn_y, bx + btn_width // 2 - len(btn["label"]) // 2, btn["label"].center(10), curses.A_BOLD | curses.A_REVERSE)
                 stdscr.attroff(curses.color_pair(2))
             except curses.error:
                 pass
@@ -154,6 +159,7 @@ def main_menu(stdscr):
                 break
         # Handle touch actions
         if touch_action["action"]:
+            logger.info(f"Touch action: {touch_action['action']}")
             if touch_action["action"] == "up" and current_row > 0:
                 current_row -= 1
             elif touch_action["action"] == "down" and current_row < len(MENU) - 1:
